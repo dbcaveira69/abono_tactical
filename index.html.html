@@ -239,7 +239,7 @@
             <div class="header-left-block">
                 <div class="title-line">
                     <i class="fas fa-crosshairs main-icon"></i>
-                    <span class="logo-title">GestorPro - Controle de Abonos e Extras <span style="font-size:14px; color:#666">V10.0</span></span>
+                    <span class="logo-title">GestorPro - Controle de Abonos e Extras <span style="font-size:14px; color:#666">V10.1</span></span>
                 </div>
                 <div class="user-id-line">
                     <i class="fas fa-skull peto-skull"></i> SD PM D. BARRETO - Mat: 92.137.431
@@ -510,8 +510,10 @@
         let donutChart = null; // Chart Rosca
         let comparisonChart = null; // Chart Comparativo
         
-        // URL PARA SINCRONIZAÇÃO
-        const SYNC_URL = "https://script.google.com/macros/s/AKfycbz2DakU7YZcMcsGgFdS1r6kmygj7SslkvxXau-YryW8u5Zddhmr3eEAYE31j07YzUF1/exec";
+        // -----------------------------------------------------------
+        // ⚠️ ATENÇÃO: COLE SUA NOVA URL DO GOOGLE APPS SCRIPT ABAIXO
+        // -----------------------------------------------------------
+        const SYNC_URL = "https://script.google.com/macros/s/AKfycbw4Fzl3Lmoxa8CdeUDfiEl71fUN3EYyfFcNBhLY28IJUskKhZ3ldlNt2IFKWqKvHGXH/exec"; 
 
         // Tabela de valores para HE (PMBA)
         const tabelaValoresPM = {
@@ -574,21 +576,41 @@
             lastBotMsgIndex++;
         }
 
-        /* --- SINCRONIZAÇÃO NUVEM AUTOMÁTICA --- */
+        /* --- SINCRONIZAÇÃO NUVEM AUTOMÁTICA (MODIFICADA) --- */
         async function autoSync() {
             const statusDiv = document.getElementById('sync-status');
+            
+            // Verifica se a URL foi configurada
+            if(SYNC_URL.includes("COLE_SUA_URL")) {
+                statusDiv.innerHTML = '<i class="fas fa-exclamation"></i> CFG URL';
+                statusDiv.style.color = '#ff9800';
+                return;
+            }
+
             try {
                 statusDiv.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> ENVIANDO...';
                 statusDiv.style.color = '#ffc107'; 
+
+                // --- OTIMIZAÇÃO CRÍTICA ---
+                // Cria uma cópia dos dados removendo a imagem pesada (Base64) antes de enviar para a nuvem
+                const dadosParaNuvem = dbExtras.map(item => ({
+                    ...item,
+                    anexo: item.anexo ? "COM_ANEXO_LOCAL" : "" // Substitui a imagem por texto simples
+                }));
+
                 await fetch(SYNC_URL, {
-                    method: 'POST', mode: 'no-cors', 
+                    method: 'POST', 
+                    mode: 'no-cors', // Necessário para Google Scripts
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dbExtras)
+                    body: JSON.stringify(dadosParaNuvem)
                 });
+                
+                // Como usamos no-cors, assumimos sucesso se não der erro de rede
                 setTimeout(() => {
                     statusDiv.innerHTML = '<i class="fas fa-wifi"></i> CONECTADO';
                     statusDiv.style.color = '#8bc34a'; 
                 }, 1000);
+
             } catch (error) {
                 console.error("Erro no sync:", error);
                 statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> FALHA SYNC';
